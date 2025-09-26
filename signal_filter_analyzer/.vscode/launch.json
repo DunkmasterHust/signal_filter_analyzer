@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/cryst/Desktop/code",
-      "program": "c:/Users/cryst/Desktop/code/build/Debug/outDebug",
+      "cwd": "c:/Users/cryst/Desktop/signal_filter_analyzer/signal_filter_analyzer",
+      "program": "c:/Users/cryst/Desktop/signal_filter_analyzer/signal_filter_analyzer/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
