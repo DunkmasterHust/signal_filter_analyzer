@@ -32,6 +32,7 @@ from matplotlib.widgets import Cursor
 from scipy.signal import freqz
 import ctypes
 import os
+import platform
 
 # Write the C code for a 1st order RC filter: Yn = a*Yn-1 + b*Xn
 c_code = """
@@ -58,14 +59,29 @@ double iir1_step(IIR1* f, double input) {
 
 # Save and compile the C code as a shared library
 c_file = "iir1_filter.c"
-so_file = "iir1_filter.so"
+
+# 根据操作系统选择合适的文件扩展名和编译选项
+if platform.system() == "Windows":
+    lib_file = "iir1_filter.dll"
+    compile_cmd = f"gcc -shared -o {lib_file} {c_file}"
+else:
+    lib_file = "iir1_filter.so"
+    compile_cmd = f"gcc -shared -fPIC -o {lib_file} {c_file}"
+
+# 写入C代码文件
 with open(c_file, "w") as f:
     f.write(c_code)
 
-os.system(f"gcc -shared -fPIC -o {so_file} {c_file}")
+# 编译C代码
+compile_result = os.system(compile_cmd)
+if compile_result != 0:
+    raise RuntimeError(f"C代码编译失败，退出码: {compile_result}")
 
-# Load the shared library
-lib = ctypes.CDLL(f"./{so_file}")
+# 加载共享库
+try:
+    lib = ctypes.CDLL(f"./{lib_file}")
+except OSError as e:
+    raise RuntimeError(f"无法加载共享库 {lib_file}: {e}")
 
 # Define ctypes structures and functions
 class IIR1(ctypes.Structure):
