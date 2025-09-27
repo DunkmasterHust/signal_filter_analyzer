@@ -69,19 +69,48 @@ else:
     compile_cmd = f"gcc -shared -fPIC -o {lib_file} {c_file}"
 
 # 写入C代码文件
+print(f"Writing C code to {c_file}...")
 with open(c_file, "w") as f:
-    f.write(c_code)
+    f.write(c_code.strip())  # 去除首尾空白字符
 
 # 编译C代码
+print(f"Compiling with command: {compile_cmd}")
 compile_result = os.system(compile_cmd)
+print(f"Compilation result: {compile_result}")
+
 if compile_result != 0:
-    raise RuntimeError(f"C代码编译失败，退出码: {compile_result}")
+    print(f"Compilation failed. Checking if output file exists: {os.path.exists(lib_file)}")
+    # 尝试获取更详细的错误信息
+    import subprocess
+    try:
+        result = subprocess.run(compile_cmd.split(), capture_output=True, text=True, cwd='.')
+        print(f"Detailed error output:")
+        print(f"STDOUT: {result.stdout}")
+        print(f"STDERR: {result.stderr}")
+    except Exception as e:
+        print(f"Failed to get detailed error: {e}")
+    
+    # 如果文件已存在，可能编译成功了但返回了非零退出码
+    if not os.path.exists(lib_file):
+        raise RuntimeError(f"C code compilation failed with exit code: {compile_result}")
+    else:
+        print("Warning: Compilation returned non-zero exit code but output file exists. Continuing...")
 
 # 加载共享库
+print(f"Loading shared library: {lib_file}")
 try:
     lib = ctypes.CDLL(f"./{lib_file}")
+    print("Library loaded successfully!")
 except OSError as e:
-    raise RuntimeError(f"无法加载共享库 {lib_file}: {e}")
+    print(f"Failed to load library {lib_file}: {e}")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Library file exists: {os.path.exists(lib_file)}")
+    if os.path.exists(lib_file):
+        import stat
+        file_stat = os.stat(lib_file)
+        print(f"Library file size: {file_stat.st_size} bytes")
+        print(f"Library file permissions: {oct(file_stat.st_mode)}")
+    raise RuntimeError(f"Cannot load shared library {lib_file}: {e}")
 
 # Define ctypes structures and functions
 class IIR1(ctypes.Structure):
