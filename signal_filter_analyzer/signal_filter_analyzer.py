@@ -60,7 +60,7 @@ double iir1_step(IIR1* f, double input) {
 # Save and compile the C code as a shared library
 c_file = "iir1_filter.c"
 
-# 根据操作系统选择合适的文件扩展名和编译选项
+# Select appropriate file extension and compilation options based on operating system
 if platform.system() == "Windows":
     lib_file = "iir1_filter.dll"
     compile_cmd = f"gcc -shared -o {lib_file} {c_file}"
@@ -68,19 +68,19 @@ else:
     lib_file = "iir1_filter.so"
     compile_cmd = f"gcc -shared -fPIC -o {lib_file} {c_file}"
 
-# 写入C代码文件
+# Write C code file
 print(f"Writing C code to {c_file}...")
 with open(c_file, "w") as f:
-    f.write(c_code.strip())  # 去除首尾空白字符
+    f.write(c_code.strip())  # Remove leading and trailing whitespace
 
-# 编译C代码
+# Compile C code
 print(f"Compiling with command: {compile_cmd}")
 compile_result = os.system(compile_cmd)
 print(f"Compilation result: {compile_result}")
 
 if compile_result != 0:
     print(f"Compilation failed. Checking if output file exists: {os.path.exists(lib_file)}")
-    # 尝试获取更详细的错误信息
+    # Try to get more detailed error information
     import subprocess
     try:
         result = subprocess.run(compile_cmd.split(), capture_output=True, text=True, cwd='.')
@@ -90,13 +90,13 @@ if compile_result != 0:
     except Exception as e:
         print(f"Failed to get detailed error: {e}")
     
-    # 如果文件已存在，可能编译成功了但返回了非零退出码
+    # If file exists, compilation may have succeeded but returned non-zero exit code
     if not os.path.exists(lib_file):
         raise RuntimeError(f"C code compilation failed with exit code: {compile_result}")
     else:
         print("Warning: Compilation returned non-zero exit code but output file exists. Continuing...")
 
-# 加载共享库
+# Load shared library
 print(f"Loading shared library: {lib_file}")
 try:
     lib = ctypes.CDLL(f"./{lib_file}")
@@ -297,50 +297,50 @@ plt.show()
 # -----------------------------------------------------------------------------
 # How to Calculate 'a' and 'b' Coefficients for the 1st Order RC Digital Filter
 # -----------------------------------------------------------------------------
-# 推导过程 (Derivation):
+# Derivation Process:
 #
-# 1. 模拟RC低通滤波器的连续时间传递函数:
+# 1. Continuous-time transfer function of analog RC lowpass filter:
 #      H(s) = 1 / (1 + sRC)
 #
-# 2. 对应的微分方程:
+# 2. Corresponding differential equation:
 #      v_out(t) + RC * dv_out/dt = v_in(t)
 #
-# 3. 离散化（以采样周期dt=1/fs为步长，使用前向欧拉法或后向欧拉法，或直接用零阶保持法/匹配z变换）：
-#    这里采用“等效一阶惯性离散化”或“匹配z变换”：
+# 3. Discretization (using sampling period dt=1/fs, forward/backward Euler method, or zero-order hold/matched z-transform):
+#    Here we use "equivalent first-order inertial discretization" or "matched z-transform":
 #
-#    设 y[n] ≈ v_out(n*dt), x[n] ≈ v_in(n*dt)
+#    Let y[n] ≈ v_out(n*dt), x[n] ≈ v_in(n*dt)
 #
-#    离散递推公式为：
+#    Discrete recursive formula:
 #      y[n] = a * y[n-1] + b * x[n]
 #
-#    其中：
+#    Where:
 #      a = exp(-dt/RC)
 #      b = 1 - a
 #
-#    推导简要说明：
-#      - RC电路的单位脉冲响应为 h(t) = (1/RC) * exp(-t/RC) * u(t)
-#      - 离散采样后，h[n] = (1/RC) * exp(-n*dt/RC) * dt
-#      - 离散系统的z域传递函数为 H(z) = b / (1 - a*z^-1)
-#      - 使得离散系统的极点与连续系统的极点在采样点处一致（匹配z变换），即 a = exp(-dt/RC)
-#      - b 由单位阶跃响应收敛到1决定，b = 1 - a
+#    Brief derivation explanation:
+#      - Unit impulse response of RC circuit: h(t) = (1/RC) * exp(-t/RC) * u(t)
+#      - After discrete sampling: h[n] = (1/RC) * exp(-n*dt/RC) * dt
+#      - Z-domain transfer function of discrete system: H(z) = b / (1 - a*z^-1)
+#      - Match discrete system poles with continuous system poles at sampling points (matched z-transform): a = exp(-dt/RC)
+#      - b determined by unit step response converging to 1: b = 1 - a
 #
-# 4. 计算步骤:
-#      - 已知采样率 fs (Hz)
-#      - 已知截止频率 fc (Hz)
+# 4. Calculation steps:
+#      - Given sampling rate fs (Hz)
+#      - Given cutoff frequency fc (Hz)
 #      - RC = 1 / (2 * pi * fc)
 #      - dt = 1 / fs
 #      - a = exp(-dt / RC)
 #      - b = 1 - a
 #
-# 5. 代码示例:
-#      fs = 20000         # 采样率 (Hz)
-#      fc = 10            # 截止频率 (Hz)
+# 5. Code example:
+#      fs = 20000         # Sampling rate (Hz)
+#      fc = 10            # Cutoff frequency (Hz)
 #      dt = 1 / fs
 #      RC = 1 / (2 * np.pi * fc)
 #      a = np.exp(-dt / RC)
 #      b = 1 - a
 #
-# 6. 离散滤波器差分方程:
+# 6. Discrete filter difference equation:
 #      y[n] = a * y[n-1] + b * x[n]
 #
 # -----------------------------------------------------------------------------
